@@ -8,7 +8,7 @@ public class Main {
 
         JFrame test = new JFrame("Testing Board Render");
 
-        ChessBoard test2 = new ChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0");
+        BoardRenderer test2 = new BoardRenderer();
 
         test.add(test2);
 

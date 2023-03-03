@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="ChessAttempt:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/ChessAttempt_jar</output-path>
+    <root id="archive" name="ChessAttempt.jar">
+      <element id="module-output" name="ChessAttempt" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/annotations/20.1.0/annotations-20.1.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

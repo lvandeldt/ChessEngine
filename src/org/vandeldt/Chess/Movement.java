@@ -34,7 +34,7 @@ public class Movement {
     }
 
 
-    public HashSet<Point> generateMoves(ChessBoardSquare[][] target_board, Point current_position, Piece.Team current_team) {
+    public HashSet<Point> generateMoves(Piece[][] target_board, Point current_position, Piece.Team current_team) {
 
         HashSet<Point> valid_moves = new HashSet<>();
 
@@ -52,8 +52,8 @@ public class Movement {
                     continue DIRECTION;
                 }
 
-                if (target_board[working_position.x][working_position.y].isOccupied()) {
-                    if (target_board[working_position.x][working_position.y].getOccupant().getTeam() != current_team && this.capture_behaviour != CaptureBehaviour.NO_CAPTURE) {
+                if (target_board[working_position.x][working_position.y] != null) {
+                    if (target_board[working_position.x][working_position.y].getTeam() != current_team && this.capture_behaviour != CaptureBehaviour.NO_CAPTURE) {
                         valid_moves.add(new Point(working_position));
                     }
 

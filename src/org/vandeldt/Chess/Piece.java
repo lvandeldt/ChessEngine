@@ -38,6 +38,7 @@ public class Piece {
     private Point position;
     private boolean can_do_special = true;
     private final ChessBoard parent_board;
+    private ImageIcon sprite;
 
     private final HashSet<Movement> allowed_movement = new HashSet<>();
 
@@ -46,6 +47,7 @@ public class Piece {
         this.type = type;
         this.team = team;
         this.position = position;
+        this.sprite = new ImageIcon(Objects.requireNonNull(getClass().getResource("sprites/" + this.type.toString() + "_" + this.team.toString() + ".png")));
     }
 
     public Piece(ChessBoard parent_board, Type type, Team team, Point position, boolean can_do_special) {
@@ -73,14 +75,14 @@ public class Piece {
 
     private HashSet<Point> getPawnSpecialMoves() {
         int direction = (this.team == Piece.Team.WHITE ? -1 : 1);
-        ChessBoardSquare[][] board = this.parent_board.getBoard();
+        Piece[][] board = this.parent_board.getBoard();
         Point enpassant_square = this.parent_board.getEnpassantSquare();
 
         HashSet<Point> special_moves = new HashSet<>();
 
         // Opening double move
-        if (this.can_do_special && !board[this.position.x + direction][this.position.y].isOccupied()
-                && !board[this.position.x + direction * 2][this.position.y].isOccupied()) {
+        if (this.can_do_special && board[this.position.x + direction][this.position.y] == null
+                && board[this.position.x + direction * 2][this.position.y] == null) {
 
             special_moves.add(new Point(this.position.x + direction * 2, this.position.y));
 
@@ -106,17 +108,17 @@ public class Piece {
             return special_moves;
         }
 
-        ChessBoardSquare[][] board = this.parent_board.getBoard();
+        Piece[][] board = this.parent_board.getBoard();
 
         // Kingside Castle
-        Piece kingside_corner_piece = board[this.position.x][board.length - 1].getOccupant();
+        Piece kingside_corner_piece = board[this.position.x][board.length - 1];
 
         if ( kingside_corner_piece != null ) {
 
             // If the piece in the corner has can_do_special set true it should be a same colour rook anyway.
 
-            if ( kingside_corner_piece.can_do_special && !board[this.position.x][this.position.y + 1].isOccupied() &&
-                !board[this.position.x][this.position.y + 2].isOccupied()) {
+            if ( kingside_corner_piece.can_do_special && board[this.position.x][this.position.y + 1] == null &&
+                board[this.position.x][this.position.y + 2] == null) {
 
                 special_moves.add(new Point(this.position.x, this.position.y + 2));
 
@@ -125,14 +127,14 @@ public class Piece {
         }
 
         // Queenside Castle
-        Piece queenside_corner_piece = board[this.position.x][0].getOccupant();
+        Piece queenside_corner_piece = board[this.position.x][0];
 
         if ( queenside_corner_piece != null ) {
 
             // If the piece in the corner has can_do_special set true it should be a same colour rook anyway.
 
-            if ( queenside_corner_piece.can_do_special && !board[this.position.x][this.position.y - 1].isOccupied() &&
-                    !board[this.position.x][this.position.y - 2].isOccupied() && !board[this.position.x][this.position.y - 3].isOccupied()) {
+            if ( queenside_corner_piece.can_do_special && board[this.position.x][this.position.y - 1] == null &&
+                    board[this.position.x][this.position.y - 2] == null && board[this.position.x][this.position.y - 3] == null) {
 
                 special_moves.add(new Point(this.position.x, this.position.y - 2));
 
@@ -161,7 +163,8 @@ public class Piece {
         }
 
         this.allowed_movement.clear();
-        this.addMovement( DefaultMoves.CHARACTER_MOVEMENT_HASHTABLE.get( TYPE_CHARACTER_HASHTABLE.get(this.type) ) );
+        this.addMovement( ChessDefaults.CHARACTER_MOVEMENT_HASHTABLE.get( TYPE_CHARACTER_HASHTABLE.get(this.type) ) );
+        this.sprite = new ImageIcon(Objects.requireNonNull(getClass().getResource("sprites/" + this.type.toString() + "_" + this.team.toString() + ".png")));
 
     }
 
@@ -188,7 +191,7 @@ public class Piece {
 
     public ImageIcon getSprite() {
 
-        return new ImageIcon(Objects.requireNonNull(getClass().getResource("sprites/" + this.type.toString() + "_" + this.team.toString() + ".png")));
+        return this.sprite;
 
     }
 

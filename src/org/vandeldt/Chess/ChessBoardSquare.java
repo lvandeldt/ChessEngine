@@ -7,7 +7,6 @@ public class ChessBoardSquare extends JPanel {
 
     private final Color DEFAULT_COLOUR;
     private final JLabel display = new JLabel();
-    private Piece occupant;
     private final Point position;
     private boolean is_valid_move = false;
 
@@ -29,25 +28,16 @@ public class ChessBoardSquare extends JPanel {
         return this.is_valid_move;
     }
 
+    public void setDisplay(ImageIcon icon) {
+        this.display.setIcon( icon );
+    }
+
     public Point getPosition() {
         return this.position;
     }
 
-    public void setOccupant(Piece piece) {
-        this.occupant = piece;
-        this.update();
-    }
-
-    public boolean isOccupied() {
-        return this.occupant != null;
-    }
-
     public void update() {
-        this.display.setIcon( this.occupant != null ? this.occupant.getSprite() : null );
         this.setBackground(DEFAULT_COLOUR);
     }
 
-    public Piece getOccupant() {
-        return occupant;
-    }
 }
