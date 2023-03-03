@@ -2,6 +2,7 @@ package org.vandeldt.Chess;
 
 import java.awt.*;
 import java.util.HashSet;
+import java.util.Objects;
 
 public class Movement {
 
@@ -35,6 +36,10 @@ public class Movement {
 
 
     public HashSet<Point> generateMoves(Piece[][] target_board, Point current_position, Piece.Team current_team) {
+        return generateMoves(target_board, current_position, current_team, false);
+    }
+
+    public HashSet<Point> generateMoves(Piece[][] target_board, Point current_position, Piece.Team current_team, boolean captures_only) {
 
         HashSet<Point> valid_moves = new HashSet<>();
 
@@ -59,7 +64,7 @@ public class Movement {
 
                     continue DIRECTION;
 
-                } else if (this.capture_behaviour != CaptureBehaviour.CAPTURE_ONLY) {
+                } else if (this.capture_behaviour != CaptureBehaviour.CAPTURE_ONLY && !captures_only) {
                     valid_moves.add(new Point(working_position));
                 }
             } while (repeats);
@@ -70,4 +75,16 @@ public class Movement {
 
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Movement movement = (Movement) o;
+        return repeats == movement.repeats && Objects.equals(directions, movement.directions) && capture_behaviour == movement.capture_behaviour;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(directions, repeats, capture_behaviour);
+    }
 }

@@ -168,6 +168,10 @@ public class Piece {
 
     }
 
+    public boolean hasMovement(Movement movement) {
+        return this.allowed_movement.contains( movement );
+    }
+
     public void addMovement(Movement movement) {
         this.allowed_movement.add(movement);
     }

@@ -2,16 +2,31 @@ package org.vandeldt.Chess;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Iterator;
 
 public class ChessBoard {
 
     private Piece[][] board = new Piece[ChessDefaults.BOARD_SIZE][ChessDefaults.BOARD_SIZE];
-
     private Piece.Team colour_to_move = Piece.Team.WHITE;
-
     private Point enpassant_square = null;
     private int halfmove_clock = 0;
     private int fullmoves = 0;
+
+    private final Hashtable< Piece.Team, Hashtable< Piece.Type, HashSet<Point>>> piece_positions = new Hashtable<>()  {{
+        put(Piece.Team.BLACK, new Hashtable<>() {{
+            for (Piece.Type type : Piece.Type.values()) {
+                put(type,new HashSet<>());
+            }
+        }});
+
+        put(Piece.Team.WHITE, new Hashtable<>() {{
+            for (Piece.Type type : Piece.Type.values()) {
+                put(type,new HashSet<>());
+            }
+        }});
+    }};
 
 
     public ChessBoard(String fen) {
@@ -25,40 +40,41 @@ public class ChessBoard {
 
 
     public void makeMove(Point from, Point to) {
+        makeMove(from, to, false);
+    }
+
+    public void makeMove(Point from, Point to, boolean test_move) {
+
+        // TODO: Make this method nicer.
+        // TODO: Complete piece_positions logic in here. i.e captures and castles.
 
         board[ to.x ][ to.y ] = board[from.x][from.y];
         board[from.x][from.y] = null;
 
-        board[ to.x ][ to.y ].setPosition( to );
+        checkEnPassant(from, to);
+        checkCastle(from, to);
 
-        // Check if we have En Passant captured
-        if (to.equals(enpassant_square) && board[ to.x ][ to.y ].getType() == Piece.Type.PAWN) {
 
-            int capture_direction = board[ to.x ][ to.y ].getTeam() == Piece.Team.WHITE ? 1 : -1;
+        if (!test_move) {
+            checkPromotion(to);
 
-            board[to.x + capture_direction][to.y] = null;
+            updatePositionOf( getPieceAt(to).getTeam(), getPieceAt(to).getType(), from, to );
 
+            board[to.x][to.y].setPosition(to);
+
+            this.halfmove_clock++;
+            this.fullmoves += (this.colour_to_move == Piece.Team.BLACK) ? 1 : 0;
+
+            this.toggleColourToMove();
+
+            if (this.isInCheck(this.colour_to_move)) {
+                System.out.println("Check!");
+            }
         }
 
-        // Check if we have can en passant next turn.
-        if ( from.distance(to) == 2 &&  board[ to.x ][ to.y ].getType() == Piece.Type.PAWN) {
-            this.enpassant_square = new Point( (from.x + to.x) / 2, from.y );
-        } else {
-            this.enpassant_square = null;
-        }
+    }
 
-        // Check for pawn promotion
-        if ( board[ to.x ][ to.y ].getType() == Piece.Type.PAWN && (to.x == 0 || to.x == ChessDefaults.BOARD_SIZE - 1) ) {
-            System.out.println("Promote");
-
-            Piece.Type promotion = (Piece.Type) JOptionPane.showInputDialog(null, "Promote Pawn to:", "Pawn Promotion",
-                    JOptionPane.PLAIN_MESSAGE, null, new Piece.Type[] {Piece.Type.QUEEN, Piece.Type.ROOK,
-                            Piece.Type.KNIGHT, Piece.Type.BISHOP}, Piece.Type.QUEEN);
-
-
-            board[to.x][to.y].promoteTo( promotion );
-        }
-
+    private void checkCastle(Point from, Point to) {
         // Check caste
         if ( from.distance(to) == 2 &&  board[ to.x ][ to.y ].getType() == Piece.Type.KING) {
 
@@ -74,11 +90,119 @@ public class ChessBoard {
             }
 
         }
+    }
 
-        this.halfmove_clock++;
-        this.fullmoves += (this.colour_to_move == Piece.Team.BLACK) ? 1 : 0;
+    private void checkPromotion(Point to) {
+        // Check for pawn promotion
+        if ( board[ to.x ][ to.y ].getType() == Piece.Type.PAWN && (to.x == 0 || to.x == ChessDefaults.BOARD_SIZE - 1) ) {
+            System.out.println("Promote");
 
-        this.toggleColourToMove();
+            Piece.Type promotion = (Piece.Type) JOptionPane.showInputDialog(null, "Promote Pawn to:", "Pawn Promotion",
+                    JOptionPane.PLAIN_MESSAGE, null, new Piece.Type[] {Piece.Type.QUEEN, Piece.Type.ROOK,
+                            Piece.Type.KNIGHT, Piece.Type.BISHOP}, Piece.Type.QUEEN);
+
+
+            board[to.x][to.y].promoteTo( promotion );
+        }
+    }
+
+    private void checkEnPassant(Point from, Point to) {
+        // Check if we have En Passant captured
+        if (to.equals(enpassant_square) && board[ to.x ][ to.y ].getType() == Piece.Type.PAWN) {
+
+            int capture_direction = board[ to.x ][ to.y ].getTeam() == Piece.Team.WHITE ? 1 : -1;
+
+            board[to.x + capture_direction][to.y] = null;
+
+        }
+
+        // Check if we have can en passant next turn.
+        if ( from.distance(to) == 2 &&  board[ to.x ][ to.y ].getType() == Piece.Type.PAWN) {
+            this.enpassant_square = new Point( (from.x + to.x) / 2, from.y );
+        } else {
+            this.enpassant_square = null;
+        }
+    }
+
+    public boolean positionIsThreatened(Point position, Piece.Team for_team) {
+
+        for ( Movement movement: ChessDefaults.THREATENING_MOVES ) {
+
+            for (Point possible_threat: movement.generateMoves( this.board, position, for_team, true )) {
+
+                Movement movement_to_check;
+
+                if (!movement.equals(ChessDefaults.PAWN_CAPTURE_BLACK) && !movement.equals(ChessDefaults.PAWN_CAPTURE_WHITE)) {
+                    movement_to_check = movement;
+                } else {
+                    movement_to_check = movement == ChessDefaults.PAWN_CAPTURE_BLACK ? ChessDefaults.PAWN_CAPTURE_WHITE: ChessDefaults.PAWN_CAPTURE_BLACK;
+                }
+
+                if (getPieceAt(possible_threat).hasMovement(movement_to_check)) {
+                    return true;
+                }
+
+            }
+
+        }
+
+        return false;
+
+    }
+
+    public boolean positionIsThreatened(int rank, int file, Piece.Team for_team) {
+
+        return positionIsThreatened( new Point(rank, file), for_team );
+
+    }
+
+    public boolean isInCheck(Piece.Team team) {
+
+        Point king_pos = (Point) getPositionsOf(team, Piece.Type.KING).toArray()[0];
+
+        return positionIsThreatened(king_pos, team);
+
+    }
+
+    public HashSet<Point> movesForPieceAt(Point position) {
+        Piece piece = getPieceAt(position);
+
+        if (piece == null) {
+            return null;
+        }
+
+        HashSet<Point> valid_moves = piece.getValidMoves();
+
+        for (Iterator<Point> iterator = valid_moves.iterator(); iterator.hasNext(); ) {
+
+            Point move = iterator.next();
+
+            Piece[][] board_before = copyBoardState();
+
+            makeMove(position, move, true);
+
+            if (piece.getType() != Piece.Type.KING && this.isInCheck(piece.getTeam())) {
+                iterator.remove();
+            } else if (piece.getType() == Piece.Type.KING && positionIsThreatened(move, piece.getTeam())) {
+                iterator.remove();
+            }
+
+            this.board = board_before;
+
+        }
+
+        return valid_moves;
+    }
+
+    public Piece[][] copyBoardState() {
+
+        Piece[][] copy = new Piece[board.length][board[0].length];
+
+        for (int rank = 0; rank < board.length; rank++) {
+            System.arraycopy(board[rank], 0, copy[rank], 0, board[0].length);
+        }
+
+        return copy;
 
     }
 
@@ -132,8 +256,12 @@ public class ChessBoard {
                         (type == Piece.Type.ROOK && rank == (team == Piece.Team.BLACK ? 0 : 7) &&
                                 ((file == 0 && queenside_castle) || (file == ChessDefaults.BOARD_SIZE-1 && kingside_castle)));
 
-                board[rank][file] = new Piece(this, type, team, new Point(rank, file), can_do_special);
+                Point start_position = new Point(rank, file);
+
+                board[rank][file] = new Piece(this, type, team, start_position, can_do_special);
                 board[rank][file].addMovement( movement );
+
+                this.piece_positions.get(team).get(type).add(start_position);
 
                 file++;
 
@@ -177,6 +305,22 @@ public class ChessBoard {
 
     public Piece getPieceAt(Point position) {
         return getPieceAt(position.x, position.y);
+    }
+
+    public HashSet<Point> getPositionsOf(Piece.Team team, Piece.Type type) {
+        return this.piece_positions.get(team).get(type);
+    }
+
+    private void updatePositionOf(Piece.Team team, Piece.Type type, Point from, Point to) {
+        HashSet<Point> positions = this.piece_positions.get(team).get(type);
+
+        if (!positions.contains(from)) {
+            System.out.println("Attempted update of invalid position.");
+            return;
+        }
+
+        positions.remove(from);
+        positions.add(to);
     }
 
 }

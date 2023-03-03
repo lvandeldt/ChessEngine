@@ -14,6 +14,7 @@ public class ChessDefaults {
     static final Movement ORTHOGONAL_REPEATED = new Movement( new int[][] { { 1, 0 }, {-1, 0}, {0, -1}, {0, 1} }, true );
     static final Movement KNIGHT = new Movement( new int[][] { { 2, 1 }, { 2, -1 }, { -2, 1 }, { -2, -1 }, { 1, 2 }, { 1, -2 },
             { -1, 2 }, { -1, -2 }}, false );
+    static final Movement[] THREATENING_MOVES = { PAWN_CAPTURE_BLACK, PAWN_CAPTURE_WHITE, DIAGONAL, ORTHOGONAL, DIAGONAL_REPEATED, ORTHOGONAL_REPEATED, KNIGHT };
     static final Hashtable<Character, Piece.Type> CHARACTER_TYPE_HASHTABLE = new Hashtable<>() {{
 
                 put('r', Piece.Type.ROOK);

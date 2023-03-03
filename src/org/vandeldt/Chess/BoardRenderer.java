@@ -73,9 +73,7 @@ public class BoardRenderer extends JPanel {
 
     public void paintValidMoves() {
 
-        Piece selected_piece = this.render_subject.getBoard()[selected_square.x][selected_square.y];
-
-        for ( Point position : selected_piece.getValidMoves() ) {
+        for ( Point position : this.render_subject.movesForPieceAt(selected_square) ) {
 
             grid[position.x][position.y].setBackground(Color.RED);
             grid[position.x][position.y].setValidMove(true);
